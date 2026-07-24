@@ -201,15 +201,26 @@ html, body {
 }
 
 /* ----- Mini chart — spans the current calendar month ----- */
-.spark-wrap { padding: 6px 0; }
-.spark-svg { width: 100%; height: 70px; display: block; }
-.spark-bar { fill: var(--good); }
-.spark-bar.miss { fill: rgba(255,138,138,0.5); }
-.spark-target {
-  stroke: rgba(255,255,255,0.20);
+.spark-wrap { padding: 6px 0; display: flex; align-items: stretch; gap: 8px; }
+.spark-axis {
+  display: flex; flex-direction: column; justify-content: space-between;
+  flex-shrink: 0; padding: 2px 0;
+  font-family: var(--font-mono); font-size: 9px; color: var(--text-4);
+  text-align: right;
+}
+.spark-svg { flex: 1; min-width: 0; height: 130px; display: block; }
+.spark-grid {
+  stroke: rgba(255,255,255,0.08);
   stroke-width: 1; stroke-dasharray: 3 3;
   vector-effect: non-scaling-stroke;
 }
+.spark-area { fill: color-mix(in srgb, var(--good) 16%, transparent); }
+.spark-line {
+  fill: none; stroke: var(--good); stroke-width: 2;
+  stroke-linejoin: round; stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.spark-dot { fill: var(--good); }
 
 /* ----- Per-day bars for the whole month, label baked into the fill ----- */
 .month-day-row { margin-bottom: 6px; }
@@ -403,7 +414,8 @@ html, body {
   <div class="card">
     <div class="habit-label" id="monthLabel">THIS MONTH</div>
     <div class="spark-wrap">
-      <svg class="spark-svg" id="sparkSvg" viewBox="0 0 280 70" preserveAspectRatio="none"></svg>
+      <div class="spark-axis" id="sparkAxis"></div>
+      <svg class="spark-svg" id="sparkSvg" viewBox="0 0 300 130" preserveAspectRatio="none"></svg>
     </div>
     <div id="monthDaysList" style="margin-top:14px"></div>
 
@@ -712,28 +724,42 @@ html, body {
 
   function renderSparkline() {
     const svg = $('sparkSvg');
-    const W = 280, H = 70, pad = 4;
+    const W = 300, H = 130, padX = 6, padY = 10;
     const now = new Date();
     const y = now.getFullYear(), m = now.getMonth();
     const days = daysInMonth(y, m);
     const target = HABITS.length;
-    const data = [];
+    const pcts = [];
     for (let day = 1; day <= days; day++) {
-      data.push(dayCount(dateKey(new Date(y, m, day))));
+      pcts.push(Math.min(100, (dayCount(dateKey(new Date(y, m, day))) / target) * 100));
     }
-    const maxVal = Math.max(target, Math.max.apply(null, data)) || 1;
-    const colW = (W - pad * 2) / data.length;
-    const barW = colW * 0.7;
+
+    const plotX0 = padX, plotX1 = W - padX;
+    const plotY0 = padY, plotY1 = H - padY;
+    const xAt = (i) => (days > 1 ? plotX0 + (i / (days - 1)) * (plotX1 - plotX0) : (plotX0 + plotX1) / 2);
+    const yAt = (pct) => plotY1 - (pct / 100) * (plotY1 - plotY0);
+
+    // Y axis labels (0/25/50/75/100%), rendered as HTML so they stay crisp
+    // regardless of the SVG's fluid width.
+    const ticks = [100, 75, 50, 25, 0];
+    $('sparkAxis').innerHTML = ticks.map(t => '<span>' + t + '%</span>').join('');
+
     let html = '';
-    const targetY = H - pad - (target / maxVal) * (H - pad * 2);
-    html += '<line class="spark-target" x1="0" x2="' + W + '" y1="' + targetY.toFixed(1) + '" y2="' + targetY.toFixed(1) + '"/>';
-    data.forEach((v, i) => {
-      const x = pad + i * colW + (colW - barW) / 2;
-      const h = (v / maxVal) * (H - pad * 2);
-      const y = H - pad - h;
-      const cls = (v >= target) ? 'spark-bar' : 'spark-bar miss';
-      html += '<rect class="' + cls + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + Math.max(0, h).toFixed(1) + '" rx="2"/>';
+    ticks.forEach(t => {
+      const ty = yAt(t);
+      html += '<line class="spark-grid" x1="' + plotX0 + '" x2="' + plotX1 + '" y1="' + ty.toFixed(1) + '" y2="' + ty.toFixed(1) + '"/>';
     });
+
+    const linePts = pcts.map((p, i) => xAt(i).toFixed(1) + ',' + yAt(p).toFixed(1));
+    const areaPts = [plotX0.toFixed(1) + ',' + plotY1.toFixed(1)]
+      .concat(linePts)
+      .concat([plotX1.toFixed(1) + ',' + plotY1.toFixed(1)]);
+    html += '<polygon class="spark-area" points="' + areaPts.join(' ') + '"/>';
+    html += '<polyline class="spark-line" points="' + linePts.join(' ') + '"/>';
+    pcts.forEach((p, i) => {
+      html += '<circle class="spark-dot" cx="' + xAt(i).toFixed(1) + '" cy="' + yAt(p).toFixed(1) + '" r="2.2"/>';
+    });
+
     svg.innerHTML = html;
   }
 
