@@ -601,72 +601,74 @@ main {
     .wh-disconnect-link { display:block; margin:16px auto 0; padding:6px 14px; background:transparent; border:none; color:var(--text-tertiary); font-family:inherit; font-size:11px; text-align:center; cursor:pointer; letter-spacing:0.04em; }
     .wh-disconnect-link:hover { color:var(--text-secondary); text-decoration:underline; }
     .wh-err { background:rgba(255,107,107,0.08); border:1px solid rgba(255,107,107,0.28); color:#FF8A8A; padding:10px 12px; border-radius:10px; font-size:11.5px; font-family:var(--font-mono); margin-bottom:14px; }
+    /* Monetization section header */
+    .mon-head { display:flex; align-items:center; gap:12px; margin:0 4px 14px; }
+    .mon-back-btn {
+      display:flex; align-items:center; justify-content:center;
+      width:32px; height:32px; flex-shrink:0;
+      background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);
+      border-radius:50%; color:var(--text-secondary);
+      text-decoration:none; transition:background 0.15s ease, color 0.15s ease;
+    }
+    .mon-back-btn:hover { background:rgba(255,255,255,0.08); color:var(--text-primary); }
+    .mon-back-btn svg { display:block; }
+    .mon-head-title { font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--text-tertiary); }
+    /* YouTube stat blocks (connected state) */
+    .yt-stat-block { margin-bottom:18px; }
+    .yt-stat-row { display:flex; align-items:baseline; gap:6px; margin-bottom:8px; }
+    .yt-stat-label { font-size:12px; color:var(--text-tertiary); font-weight:600; flex:1; }
+    .yt-stat-num { font-size:20px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums; }
+    .yt-stat-target { font-size:12px; color:var(--text-tertiary); font-family:var(--font-mono); }
+    .yt-bar-track { height:8px; border-radius:4px; background:rgba(255,255,255,0.06); overflow:hidden; }
+    .yt-bar-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,#FF6B6B,#FF0000); transition:width 0.4s ease; }
+    .yt-hint { font-size:11px; color:var(--text-tertiary); line-height:1.5; margin-top:8px; }
   </style>
   <div class="whoop-section">
-    <div class="section-title">Whoop</div>
+    <div class="mon-head">
+      <a href="index.html" class="mon-back-btn" aria-label="Back to dashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </a>
+      <span class="mon-head-title">Monetization</span>
+    </div>
     <div class="whoop-card">
       <div id="whDisc" class="wh-disc">
-        <div class="wh-brand"><span class="wh-brand-mark">W</span><span class="wh-brand-text">WHOOP</span></div>
+        <div class="wh-brand"><span class="wh-brand-mark" style="background:#FF0000;color:#fff">▶</span><span class="wh-brand-text">YOUTUBE</span></div>
         <div class="wh-disc-title">Not connected</div>
-        <div class="wh-disc-sub">Link your account to see live recovery, sleep, and strain.</div>
-        <button id="whConnectBtn" class="wh-connect" type="button">Connect WHOOP</button>
+        <div class="wh-disc-sub">Link your account to track subscribers and public watch hours needed for monetization.</div>
+        <button id="whConnectBtn" class="wh-connect" type="button">Connect YouTube</button>
       </div>
       <div id="whConn" style="display:none">
         <div class="wh-head">
-          <div class="wh-brand"><span class="wh-brand-mark">W</span><span class="wh-brand-text">WHOOP</span><span class="wh-live"><span class="wh-live-dot"></span>live</span></div>
+          <div class="wh-brand"><span class="wh-brand-mark" style="background:#FF0000;color:#fff">▶</span><span class="wh-brand-text">YOUTUBE</span><span class="wh-live"><span class="wh-live-dot"></span>live</span></div>
           <div class="wh-head-right">
             <span id="whUpdated" class="wh-updated">—</span>
             <button id="whRefresh" class="wh-refresh" type="button" aria-label="Refresh"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15A9 9 0 1 1 5.64 5.64L23 10"/></svg></button>
           </div>
         </div>
         <div id="whErr" class="wh-err" style="display:none"></div>
-        <div class="wh-ring-wrap">
-          <svg class="wh-ring" viewBox="0 0 220 220" aria-hidden="true">
-            <circle class="wh-ring-track" cx="110" cy="110" r="96"/>
-            <circle class="wh-ring-fill" cx="110" cy="110" r="96" id="whRingFill"/>
-          </svg>
-          <div class="wh-ring-center">
-            <div id="whRecNum" class="wh-ring-num">—</div>
-            <div class="wh-ring-unit">recovery</div>
-            <div id="whRecLabel" class="wh-ring-label">—</div>
+
+        <div class="yt-stat-block">
+          <div class="yt-stat-row">
+            <span class="yt-stat-label">Subscribers</span>
+            <span class="yt-stat-num" id="ytSubs">—</span>
+            <span class="yt-stat-target">/ 1,000</span>
           </div>
+          <div class="yt-bar-track"><div class="yt-bar-fill" id="ytSubsBar" style="width:0%"></div></div>
         </div>
-        <div id="whStages" class="wh-stages" style="display:none">
-          <div class="wh-stages-head"><span class="wh-stages-eye">Sleep stages</span><span class="wh-stages-meta" id="whStagesMeta">—</span></div>
-          <div class="wh-stages-bar">
-            <div class="wh-stage wh-stage-rem"   id="whBarRem"   style="width:0%"></div>
-            <div class="wh-stage wh-stage-deep"  id="whBarDeep"  style="width:0%"></div>
-            <div class="wh-stage wh-stage-light" id="whBarLight" style="width:0%"></div>
-            <div class="wh-stage wh-stage-awake" id="whBarAwake" style="width:0%"></div>
+
+        <div class="yt-stat-block">
+          <div class="yt-stat-row">
+            <span class="yt-stat-label">Watch hours (12 mo)</span>
+            <span class="yt-stat-num" id="ytHours">—</span>
+            <span class="yt-stat-target">/ 4,000</span>
           </div>
-          <div class="wh-stages-legend">
-            <div class="wh-leg"><span class="wh-leg-dot d-rem"></span>REM<span class="wh-leg-num" id="whRem">—</span></div>
-            <div class="wh-leg"><span class="wh-leg-dot d-deep"></span>Deep<span class="wh-leg-num" id="whDeep">—</span></div>
-            <div class="wh-leg"><span class="wh-leg-dot d-light"></span>Light<span class="wh-leg-num" id="whLight">—</span></div>
-            <div class="wh-leg"><span class="wh-leg-dot d-awake"></span>Awake<span class="wh-leg-num" id="whAwake">—</span></div>
-          </div>
+          <div class="yt-bar-track"><div class="yt-bar-fill" id="ytHoursBar" style="width:0%"></div></div>
+          <div class="yt-hint">Approximate — total watch time across your channel over the last 365 days. YouTube Studio's official monetization number may differ slightly (e.g. it excludes private/unlisted views).</div>
         </div>
-        <div class="wh-stats">
-          <div class="wh-stat"><span class="wh-zone" id="whZoneSleep"></span><div class="wh-stat-label">Sleep</div><div class="wh-stat-val" id="whSleep">—</div><div class="wh-stat-sub" id="whSleepSub">—</div></div>
-          <div class="wh-stat"><span class="wh-zone" id="whZoneStrain"></span><div class="wh-stat-label">Strain</div><div class="wh-stat-val" id="whStrain">—</div><div class="wh-stat-sub" id="whStrainSub">today</div></div>
-          <div class="wh-stat"><span class="wh-zone" id="whZoneHrv"></span><div class="wh-stat-label">HRV</div><div class="wh-stat-val" id="whHrv">—</div><div class="wh-stat-sub">ms</div></div>
-          <div class="wh-stat"><span class="wh-zone" id="whZoneRhr"></span><div class="wh-stat-label">RHR</div><div class="wh-stat-val" id="whRhr">—</div><div class="wh-stat-sub">bpm</div></div>
-        </div>
-        <div id="whBio" class="wh-bio" style="display:none">
-          <div class="wh-bio-item"><span class="wh-zone" id="whZoneSkin"></span><span class="wh-bio-label">Skin temp</span><span class="wh-bio-val" id="whSkin">—</span></div>
-          <div class="wh-bio-item"><span class="wh-zone" id="whZoneSpo2"></span><span class="wh-bio-label">Blood O₂</span><span class="wh-bio-val" id="whSpo2">—</span></div>
-          <div class="wh-bio-item"><span class="wh-zone" id="whZoneResp"></span><span class="wh-bio-label">Resp rate</span><span class="wh-bio-val" id="whResp">—</span></div>
-        </div>
-        <div class="wh-legend">
-          <span class="wh-leg-item"><span class="wh-zone z-good"></span>Good</span>
-          <span class="wh-leg-item"><span class="wh-zone z-norm"></span>Normal</span>
-          <span class="wh-leg-item"><span class="wh-zone z-warn"></span>Watch</span>
-          <span class="wh-leg-item"><span class="wh-zone z-bad"></span>High / Low</span>
-        </div>
+
         <div id="whVerdict" class="wh-verdict" style="display:none">
-          <div class="wh-verdict-head"><span class="wh-verdict-eye">Today's call</span><span id="whVerdictBadge" class="wh-verdict-badge"></span></div>
+          <div class="wh-verdict-head"><span class="wh-verdict-eye">Monetization status</span><span id="whVerdictBadge" class="wh-verdict-badge"></span></div>
           <div id="whVerdictHead" class="wh-verdict-headline"></div>
-          <div id="whVerdictReasons" class="wh-verdict-reasons"></div>
         </div>
         <button id="whDisconnectBtn" class="wh-disconnect-link" type="button">Disconnect</button>
       </div>
@@ -674,19 +676,20 @@ main {
   </div>
   <script>
   (function () {
-    const KEY = 'whoop_tokens_v1';
-    const CLIENT_ID = '3b9d1b01-31fb-4bd8-b18c-c7fa27deed2f';
-    const REDIRECT  = window.location.origin + '/api/whoop-callback';
-    const SCOPES    = 'read:recovery read:sleep read:workout read:cycles read:profile read:body_measurement offline';
+    const KEY = 'yt_tokens_v1';
+    // Paste your Google OAuth Client ID here (see SETUP.md → "5. YouTube Analytics").
+    const CLIENT_ID = 'PASTE-YOUR-GOOGLE-OAUTH-CLIENT-ID.apps.googleusercontent.com';
+    const REDIRECT  = window.location.origin + '/api/youtube-callback';
+    const SCOPES    = 'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly';
 
     function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } }
     function save(t) { try { localStorage.setItem(KEY, JSON.stringify(t)); } catch {} }
     function wipe() { try { localStorage.removeItem(KEY); } catch {} }
 
-    if (location.hash && location.hash.indexOf('whoop_access') !== -1) {
+    if (location.hash && location.hash.indexOf('yt_access') !== -1) {
       const h = new URLSearchParams(location.hash.slice(1));
-      const access = h.get('whoop_access'), refresh = h.get('whoop_refresh');
-      const expires = Number(h.get('whoop_expires')) || Date.now() + 3500e3;
+      const access = h.get('yt_access'), refresh = h.get('yt_refresh');
+      const expires = Number(h.get('yt_expires')) || Date.now() + 3500e3;
       if (access) { save({ access, refresh, expires }); history.replaceState(null, '', location.pathname + location.search); }
     }
 
@@ -695,10 +698,16 @@ main {
     function showErr(m) { errEl.textContent = m || ''; errEl.style.display = m ? 'block' : 'none'; }
 
     $('whConnectBtn').addEventListener('click', () => {
-      const url = 'https://api.prod.whoop.com/oauth/oauth2/auth'
+      if (!CLIENT_ID || CLIENT_ID.indexOf('PASTE-') === 0) {
+        showErr('Not configured yet — add your Google OAuth Client ID in health.html (see SETUP.md).');
+        return;
+      }
+      const url = 'https://accounts.google.com/o/oauth2/v2/auth'
         + '?client_id='     + encodeURIComponent(CLIENT_ID)
         + '&redirect_uri='  + encodeURIComponent(REDIRECT)
         + '&response_type=code'
+        + '&access_type=offline'
+        + '&prompt=consent'
         + '&scope='         + encodeURIComponent(SCOPES)
         + '&state='         + Math.random().toString(36).slice(2);
       location.href = url;
@@ -712,164 +721,66 @@ main {
     async function refreshTok(t) {
       if (!t.refresh) return null;
       try {
-        const r = await fetch('/api/whoop-refresh', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ refresh_token: t.refresh }) });
+        const r = await fetch('/api/youtube-refresh', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ refresh_token: t.refresh }) });
         const j = await r.json();
         if (j.access_token) {
-          const next = { access: j.access_token, refresh: j.refresh_token || t.refresh, expires: Date.now() + (j.expires_in||3500)*1000 };
+          const next = { access: j.access_token, refresh: t.refresh, expires: Date.now() + (j.expires_in||3500)*1000 };
           save(next); return next;
         }
       } catch {}
       return null;
     }
-    async function whFetch(path, t) {
-      const [p, qs] = path.split('?');
-      const params = new URLSearchParams(qs || ''); params.set('path', p);
-      const r = await fetch('/api/whoop-data?' + params.toString(), { headers: { 'Authorization': 'Bearer ' + t.access, 'Accept':'application/json' } });
-      if (r.status === 401) { const n = await refreshTok(t); if (n) return whFetch(path, n); throw new Error('unauthorized — reconnect'); }
-      if (!r.ok) throw new Error('WHOOP ' + r.status + ': ' + (await r.text()));
+    async function ytFetch(api, path, params, t) {
+      const qs = new URLSearchParams(params || {});
+      qs.set('api', api); qs.set('path', path);
+      const r = await fetch('/api/youtube-data?' + qs.toString(), { headers: { 'Authorization': 'Bearer ' + t.access, 'Accept':'application/json' } });
+      if (r.status === 401) { const n = await refreshTok(t); if (n) return ytFetch(api, path, params, n); throw new Error('unauthorized — reconnect'); }
+      if (!r.ok) throw new Error('YouTube ' + r.status + ': ' + (await r.text()));
       return await r.json();
     }
 
-    function fmtMins(ms) { const m = Math.round(ms/60000); const h = Math.floor(m/60); return h + 'h ' + String(m%60).padStart(2,'0') + 'm'; }
-    function fmtMinsShort(ms) { const m = Math.round(ms/60000); const h = Math.floor(m/60); return (h>0?h+'h ':'') + (m%60)+'m'; }
-    function zone(el, c) { el.className = 'wh-zone'; if (c) el.classList.add('z-' + c); }
-    function recoveryZone(v) { if (v == null) return null; if (v >= 67) return 'good'; if (v >= 34) return 'warn'; return 'bad'; }
-    function sleepZone(p) { if (p == null) return null; if (p >= 85) return 'good'; if (p >= 70) return 'norm'; return 'warn'; }
-    function strainZone(s) { if (s == null) return null; if (s < 6) return 'norm'; if (s < 14) return 'good'; if (s < 18) return 'warn'; return 'bad'; }
-    function hrvZone(h) { if (h == null) return null; if (h >= 60) return 'good'; if (h >= 40) return 'norm'; return 'warn'; }
-    function rhrZone(r) { if (r == null) return null; if (r <= 55) return 'good'; if (r <= 70) return 'norm'; return 'warn'; }
-    function tempZone(t) { if (t == null) return null; if (t >= 32.5 && t <= 34) return 'good'; if (t >= 31 && t <= 35) return 'norm'; return 'warn'; }
-    function spo2Zone(s) { if (s == null) return null; if (s >= 95) return 'good'; if (s >= 92) return 'norm'; if (s >= 88) return 'warn'; return 'bad'; }
-    function respZone(r) { if (r == null) return null; if (r >= 12 && r <= 18) return 'good'; if (r >= 10 && r <= 22) return 'norm'; return 'warn'; }
-
-    function ringStroke(score) {
-      // green > yellow > red
-      if (score >= 67) return '#6BE3A4';
-      if (score >= 34) return '#F2C063';
-      return '#FF8A8A';
-    }
-    function recoveryLabel(score) {
-      if (score >= 67) return 'Go hard today';
-      if (score >= 34) return 'Moderate — listen to body';
-      return 'Recover today';
-    }
-
-    function verdict(rec, strain, sleepPerf) {
-      if (rec == null) return null;
-      let cls = 'green', badge = 'GREEN', headline = 'Push hard today. Body\'s primed — go for the PR, do the harder workout, take on the heavy task.';
-      if (rec < 67 && rec >= 34) { cls = 'yellow'; badge = 'YELLOW'; headline = 'Moderate day. Train, but don\'t max out. Stick to planned volume, skip the max effort sets.'; }
-      else if (rec < 34) { cls = 'red'; badge = 'RED'; headline = 'Recover. Body is asking for rest — light movement, walk, mobility, sleep early.'; }
-      return { cls, badge, headline };
-    }
+    function dateISO(d) { return d.toISOString().slice(0, 10); }
 
     async function loadData() {
       let t = load(); if (!t) return;
       if (t.expires && Date.now() > t.expires - 60000) { const n = await refreshTok(t); if (n) t = n; }
       showErr('');
       try {
-        const [rec, sleep, cycle] = await Promise.all([
-          whFetch('/recovery?limit=1', t).catch((e)=>{console.error('[whoop] recovery', e.message); return null;}),
-          whFetch('/activity/sleep?limit=1', t).catch((e)=>{console.error('[whoop] sleep', e.message); return null;}),
-          whFetch('/cycle?limit=1', t).catch((e)=>{console.error('[whoop] cycle', e.message); return null;}),
+        const end = new Date();
+        const start = new Date(); start.setDate(start.getDate() - 365);
+
+        const [channel, analytics] = await Promise.all([
+          ytFetch('data', '/channels', { part: 'statistics', mine: 'true' }, t),
+          ytFetch('analytics', '/reports', { ids: 'channel==MINE', startDate: dateISO(start), endDate: dateISO(end), metrics: 'estimatedMinutesWatched' }, t),
         ]);
 
-        let recScore = null, hrv = null, rhr = null, skin = null, spo2 = null;
-        const r0 = rec && rec.records && rec.records[0];
-        if (r0 && r0.score) {
-          recScore = Math.round(r0.score.recovery_score || 0);
-          hrv = r0.score.hrv_rmssd_milli != null ? Math.round(r0.score.hrv_rmssd_milli) : null;
-          rhr = r0.score.resting_heart_rate != null ? Math.round(r0.score.resting_heart_rate) : null;
-          skin = r0.score.skin_temp_celsius != null ? r0.score.skin_temp_celsius : null;
-          spo2 = r0.score.spo2_percentage != null ? r0.score.spo2_percentage : null;
+        const subs = channel && channel.items && channel.items[0] && channel.items[0].statistics
+          ? Number(channel.items[0].statistics.subscriberCount) : null;
+        const minutes = analytics && analytics.rows && analytics.rows[0] ? Number(analytics.rows[0][0]) : null;
+        const hours = minutes != null ? minutes / 60 : null;
+
+        const SUB_TARGET = 1000, HOUR_TARGET = 4000;
+        if (subs != null) {
+          $('ytSubs').textContent = subs.toLocaleString('en-US');
+          $('ytSubsBar').style.width = Math.min(100, (subs / SUB_TARGET) * 100) + '%';
+        }
+        if (hours != null) {
+          $('ytHours').textContent = hours.toLocaleString('en-US', { maximumFractionDigits: 0 });
+          $('ytHoursBar').style.width = Math.min(100, (hours / HOUR_TARGET) * 100) + '%';
         }
 
-        // Ring
-        const fill = $('whRingFill');
-        const C = 603.19;
-        if (recScore != null) {
-          fill.style.strokeDashoffset = String(C * (1 - recScore/100));
-          fill.style.stroke = ringStroke(recScore);
-          $('whRecNum').textContent = String(recScore);
-          const labelEl = $('whRecLabel');
-          labelEl.textContent = recoveryLabel(recScore);
-          labelEl.style.color = ringStroke(recScore);
-        }
-
-        // Sleep
-        let sleepPerf = null, sleepDuration = null, resp = null;
-        const s0 = sleep && sleep.records && sleep.records[0];
-        if (s0 && s0.score) {
-          sleepPerf = Math.round(s0.score.sleep_performance_percentage || 0);
-          resp = s0.score.respiratory_rate != null ? Number(s0.score.respiratory_rate).toFixed(1) : null;
-          if (s0.score.stage_summary) {
-            const ss = s0.score.stage_summary;
-            const inBed = ss.total_in_bed_time_milli || 0;
-            const awake = ss.total_awake_time_milli || 0;
-            sleepDuration = inBed - awake;
-            const rem = ss.total_rem_sleep_time_milli || 0;
-            const deep = ss.total_slow_wave_sleep_time_milli || 0;
-            const light = ss.total_light_sleep_time_milli || 0;
-            const total = rem + deep + light + awake;
-            if (total > 0) {
-              $('whStages').style.display = '';
-              $('whBarRem').style.width   = (100*rem/total)   + '%';
-              $('whBarDeep').style.width  = (100*deep/total)  + '%';
-              $('whBarLight').style.width = (100*light/total) + '%';
-              $('whBarAwake').style.width = (100*awake/total) + '%';
-              $('whStagesMeta').textContent = fmtMins(total) + ' total';
-              $('whRem').textContent   = fmtMinsShort(rem);
-              $('whDeep').textContent  = fmtMinsShort(deep);
-              $('whLight').textContent = fmtMinsShort(light);
-              $('whAwake').textContent = fmtMinsShort(awake);
-            }
-          }
-        }
-        if (sleepPerf != null) {
-          $('whSleep').textContent = sleepPerf + '%';
-          const hrs = sleepDuration ? (sleepDuration/3.6e6).toFixed(1) + 'h' : '—';
-          $('whSleepSub').textContent = hrs;
-          zone($('whZoneSleep'), sleepZone(sleepPerf));
-        }
-
-        // Strain
-        let strain = null, kcal = null;
-        const c0 = cycle && cycle.records && cycle.records[0];
-        if (c0 && c0.score && c0.score.strain != null) {
-          strain = Number(c0.score.strain);
-          $('whStrain').textContent = strain.toFixed(1);
-          if (c0.score.kilojoule != null) {
-            kcal = Math.round(c0.score.kilojoule / 4.184);
-            $('whStrainSub').textContent = kcal + ' kcal';
-          }
-          zone($('whZoneStrain'), strainZone(strain));
-        }
-
-        if (hrv != null) { $('whHrv').textContent = String(hrv); zone($('whZoneHrv'), hrvZone(hrv)); }
-        if (rhr != null) { $('whRhr').textContent = String(rhr); zone($('whZoneRhr'), rhrZone(rhr)); }
-
-        // Biomarkers
-        const anyBio = (skin != null) || (spo2 != null) || (resp != null);
-        if (anyBio) {
-          $('whBio').style.display = '';
-          if (skin != null) { $('whSkin').textContent = Number(skin).toFixed(1) + '°C'; zone($('whZoneSkin'), tempZone(skin)); }
-          if (spo2 != null) { $('whSpo2').textContent = Number(spo2).toFixed(1) + '%'; zone($('whZoneSpo2'), spo2Zone(spo2)); }
-          if (resp != null) { $('whResp').textContent = resp + ' br/min'; zone($('whZoneResp'), respZone(Number(resp))); }
-        }
-
-        // Verdict
-        const v = verdict(recScore, strain, sleepPerf);
-        if (v) {
+        if (subs != null && hours != null) {
           $('whVerdict').style.display = '';
           const badge = $('whVerdictBadge');
-          badge.textContent = v.badge;
-          badge.className = 'wh-verdict-badge ' + v.cls;
-          $('whVerdictHead').textContent = v.headline;
-          const reasons = [];
-          if (sleepPerf != null) reasons.push((sleepPerf >= 80 ? '✓' : '·') + ' Sleep score ' + sleepPerf + '% — ' + (sleepPerf >= 80 ? 'you slept well.' : 'sub-par sleep.'));
-          if (strain != null)   reasons.push((strain < 14 ? '·' : '✓') + ' Strain ' + strain.toFixed(1) + ' yesterday — ' + (strain < 14 ? 'room to push today if recovery allows.' : 'high load logged.'));
-          if (hrv != null)      reasons.push((hrv >= 50 ? '✓' : '·') + ' HRV ' + hrv + 'ms — ' + (hrv >= 50 ? 'strong autonomic state.' : 'autonomic stress.'));
-          if (rhr != null)      reasons.push((rhr <= 60 ? '✓' : '·') + ' RHR ' + rhr + 'bpm — ' + (rhr <= 60 ? 'well-conditioned.' : 'elevated.'));
-          $('whVerdictReasons').innerHTML = reasons.join('<br>');
+          const eligible = subs >= SUB_TARGET && hours >= HOUR_TARGET;
+          badge.textContent = eligible ? 'ELIGIBLE' : 'NOT YET';
+          badge.className = 'wh-verdict-badge ' + (eligible ? 'green' : 'yellow');
+          $('whVerdictHead').textContent = eligible
+            ? 'You meet the subscriber and watch-hour thresholds for YouTube Partner Program eligibility.'
+            : (subs < SUB_TARGET ? (SUB_TARGET - subs).toLocaleString('en-US') + ' more subscribers' : '')
+              + (subs < SUB_TARGET && hours < HOUR_TARGET ? ' and ' : '')
+              + (hours < HOUR_TARGET ? Math.round(HOUR_TARGET - hours).toLocaleString('en-US') + ' more watch hours' : '')
+              + ' needed.';
         }
 
         const now = new Date();

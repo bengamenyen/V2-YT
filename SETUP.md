@@ -98,7 +98,39 @@ Replace the old URL/key in these files:
 
 ---
 
-## 4. Nova (AI mentor / gym coach) — optional
+## 4. YouTube Analytics (optional) — Monetization tracker
+
+Tracks subscriber count and watch hours (last 365 days) against the YouTube Partner
+Program thresholds (1,000 subs / 4,000 hours) on the Health page.
+
+1. **console.cloud.google.com** → create a project (or use an existing one).
+2. **APIs & Services → Library** → enable both:
+   - **YouTube Data API v3**
+   - **YouTube Analytics API**
+3. **APIs & Services → OAuth consent screen** → set up as **External**, publishing status
+   **Testing** is fine for personal use — just add your own Google account under **Test users**
+   (no Google review needed since only you'll ever sign in).
+4. **APIs & Services → Credentials → Create Credentials → OAuth client ID** → type
+   **Web application**. Add this to **Authorized redirect URIs**:
+   `https://your-app.vercel.app/api/youtube-callback` (use your real Vercel domain).
+5. Put the generated **Client ID** in [`health.html`](health.html) (`const CLIENT_ID = '...'`
+   inside the Monetization section's script), and add these in Vercel →
+   **Settings → Environment Variables**, then redeploy:
+
+| Variable | Value |
+|---|---|
+| `YOUTUBE_CLIENT_ID` | your OAuth Client ID |
+| `YOUTUBE_CLIENT_SECRET` | your OAuth Client Secret (**secret**) |
+
+6. Open the site at that exact domain → Health page → **Connect YouTube**.
+
+> Watch hours shown are an approximation (total watch time across your channel over the
+> last 365 days) — YouTube Studio's official monetization number may differ slightly, since
+> it excludes private/unlisted video views.
+
+---
+
+## 5. Nova (AI mentor / gym coach) — optional
 
 No setup or key in the repo. Each user **pastes their own Anthropic API key** on the
 **Nova** tile; it's stored only in their browser and sent straight to Anthropic. Get a key at
@@ -111,4 +143,5 @@ console.anthropic.com.
 2. New Supabase → run the **SQL** above → paste your **URL + anon key** into `sync.js`,
    `topbar.js`, `gym.html`.
 3. (Optional) WHOOP: Client ID in `health.html` + the two env vars in Vercel.
-4. Change the password in `lock.js`. Done.
+4. (Optional) YouTube Analytics: Client ID in `health.html` + the two env vars in Vercel.
+5. Change the password in `lock.js`. Done.
