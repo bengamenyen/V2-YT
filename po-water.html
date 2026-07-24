@@ -208,7 +208,7 @@ html, body {
   font-family: var(--font-mono); font-size: 9px; color: var(--text-4);
   text-align: right;
 }
-.spark-scroll { flex: 1; min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.spark-scroll { flex: 1; min-width: 0; }
 .spark-svg { display: block; height: 130px; cursor: crosshair; }
 .spark-grid {
   stroke: rgba(255,255,255,0.08);
@@ -742,7 +742,7 @@ html, body {
 
   function renderSparkline() {
     const svg = $('sparkSvg');
-    const colW = 26, H = 130, padY = 10;
+    const H = 130, padY = 10;
     const now = new Date();
     const y = now.getFullYear(), m = now.getMonth();
     const days = daysInMonth(y, m);
@@ -758,7 +758,11 @@ html, body {
       dayInfo.push({ day, k, pct, dow: dows[d.getDay()] });
     }
 
-    const W = days * colW;
+    // Fit every day into the available width (no horizontal scroll) —
+    // measure the live container width rather than a fixed per-day pixel.
+    const containerW = svg.parentElement.clientWidth || 280;
+    const colW = containerW / days;
+    const W = containerW;
     const plotY0 = padY, plotY1 = H - padY;
     const xAt = (i) => i * colW + colW / 2;
     const yAt = (pct) => plotY1 - (pct / 100) * (plotY1 - plotY0);
@@ -790,9 +794,10 @@ html, body {
     });
     svg.innerHTML = html;
 
-    // X axis: weekday + date under every column.
+    // X axis: weekday + day-of-month under every column (no month digit —
+    // keeps columns narrow enough that the whole month fits without scrolling).
     $('sparkXAxis').innerHTML = dayInfo.map(d =>
-      '<div class="spark-x-day' + (d.k === today ? ' today' : '') + '" style="width:' + colW + 'px">' + d.dow.slice(0, 3).toUpperCase() + '<br>' + (m + 1) + '/' + d.day + '</div>'
+      '<div class="spark-x-day' + (d.k === today ? ' today' : '') + '" style="width:' + colW.toFixed(2) + 'px">' + d.dow.slice(0, 3).toUpperCase() + '<br>' + d.day + '</div>'
     ).join('');
 
     // Hover interactivity — show a tooltip with the day's percent.
@@ -826,6 +831,14 @@ html, body {
     renderMonthDays(); renderSparkline();
     renderMonthHabits(); renderYearTracker();
   }
+
+  // Re-measure the chart on resize (e.g. rotating a phone) so its
+  // per-day columns keep fitting the container without scrolling.
+  let sparkResizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(sparkResizeTimer);
+    sparkResizeTimer = setTimeout(renderSparkline, 150);
+  });
 
   // ============================================================
   // SETTINGS (data export/import/reset only)
