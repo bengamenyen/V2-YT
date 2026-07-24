@@ -269,6 +269,7 @@ html, body {
   height: 100%; background: linear-gradient(90deg, var(--info), var(--good));
   border-radius: 4px;
 }
+.year-row-bar-fill.imported { background: linear-gradient(90deg, #a78bfa, #7c5cff); }
 .year-row-pct {
   font-family: var(--font-mono); font-size: 12px;
   color: var(--text-2); font-variant-numeric: tabular-nums;
@@ -280,6 +281,25 @@ html, body {
 }
 .year-total-label { color: var(--good); font-weight: 700; font-size: 13px; }
 .year-total-val { color: var(--good); font-weight: 800; font-size: 20px; font-family: var(--font-mono); }
+
+/* ----- Backfill monthly % inputs (Settings) ----- */
+.backfill-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.backfill-field { display: flex; flex-direction: column; gap: 4px; }
+.backfill-field label {
+  font-size: 10px; color: var(--text-3); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.backfill-field input {
+  background: rgba(0,0,0,0.28);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  font-family: inherit; font-size: 13px;
+  padding: 8px 10px; border-radius: 8px; outline: none;
+  -moz-appearance: textfield;
+}
+.backfill-field input::-webkit-outer-spin-button,
+.backfill-field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.backfill-field input:focus { border-color: rgba(110,231,183,0.40); }
 
 /* ----- Modal ----- */
 .modal-bg {
@@ -405,6 +425,14 @@ html, body {
     <h3>Settings</h3>
 
     <div class="set-section">
+      <h4>Backfill Monthly %</h4>
+      <div style="font-size:11px;color:var(--text-3);margin-bottom:10px;line-height:1.4">
+        Override a month's tracker with a percent — handy for importing history from elsewhere (like a spreadsheet). Leave blank to calculate from days tracked in the app instead.
+      </div>
+      <div class="backfill-grid" id="backfillGrid"></div>
+    </div>
+
+    <div class="set-section">
       <h4>Data</h4>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-secondary" id="setExport">Export JSON</button>
@@ -441,9 +469,19 @@ html, body {
   ];
 
   // ============================================================
-  // STATE — {logs: {'YYYY-MM-DD': {habitId: true, ...}}}
+  // STATE — {logs: {'YYYY-MM-DD': {habitId: true, ...}},
+  //          monthOverrides: {'YYYY-M': percent}}
   // ============================================================
   const LS_KEY = 'po_habits_v1';
+
+  // One-time seed for months tracked elsewhere (e.g. a spreadsheet)
+  // before this page existed. Only fills in if no override is saved yet —
+  // safe to edit or clear from Settings afterward.
+  const SEED_MONTH_OVERRIDES = {
+    '2026-1': 65, '2026-2': 74, '2026-3': 69,
+    '2026-4': 50, '2026-5': 61, '2026-6': 53
+  };
+
   function loadState() {
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -454,6 +492,10 @@ html, body {
   function normalize(s) {
     s = s || {};
     s.logs = (s.logs && typeof s.logs === 'object') ? s.logs : {};
+    s.monthOverrides = (s.monthOverrides && typeof s.monthOverrides === 'object') ? s.monthOverrides : {};
+    Object.keys(SEED_MONTH_OVERRIDES).forEach(k => {
+      if (s.monthOverrides[k] == null) s.monthOverrides[k] = SEED_MONTH_OVERRIDES[k];
+    });
     return s;
   }
   function saveState() {
@@ -619,21 +661,53 @@ html, body {
     let html = '';
     for (let mo = 0; mo < 12; mo++) {
       const days = daysInMonth(y, mo);
-      let done = 0;
-      for (let day = 1; day <= days; day++) {
-        done += dayCount(dateKey(new Date(y, mo, day)));
-      }
       const total = HABITS.length * days;
+      const key = y + '-' + (mo + 1);
+      const override = state.monthOverrides[key];
+      let done, pct, isOverride;
+      if (override != null) {
+        pct = override;
+        done = Math.round((pct / 100) * total);
+        isOverride = true;
+      } else {
+        done = 0;
+        for (let day = 1; day <= days; day++) {
+          done += dayCount(dateKey(new Date(y, mo, day)));
+        }
+        pct = Math.round((done / total) * 100);
+        isOverride = false;
+      }
       yearDone += done; yearTotal += total;
-      const pct = Math.round((done / total) * 100);
       html += '<div class="year-row">'
         + '<span class="year-row-label' + (mo === curMonth ? ' current' : '') + '">' + mons[mo] + '</span>'
-        + '<div class="year-row-bar-wrap"><div class="year-row-bar-fill" style="width:' + Math.min(100, pct) + '%"></div></div>'
+        + '<div class="year-row-bar-wrap"><div class="year-row-bar-fill' + (isOverride ? ' imported' : '') + '" style="width:' + Math.min(100, pct) + '%"></div></div>'
         + '<span class="year-row-pct">' + pct + '%</span>'
         + '</div>';
     }
     $('yearList').innerHTML = html;
     $('yearTotalVal').textContent = Math.round((yearDone / yearTotal) * 100) + '%';
+  }
+
+  function renderBackfillInputs() {
+    const y = new Date().getFullYear();
+    const mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const grid = $('backfillGrid');
+    grid.innerHTML = mons.map((name, i) => {
+      const key = y + '-' + (i + 1);
+      const v = state.monthOverrides[key];
+      return '<div class="backfill-field"><label>' + name + '</label>'
+        + '<input type="number" min="0" max="100" step="1" data-key="' + key + '" placeholder="—" value="' + (v != null ? v : '') + '"></div>';
+    }).join('');
+    grid.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const key = inp.dataset.key;
+        const v = inp.value.trim();
+        if (v === '') delete state.monthOverrides[key];
+        else state.monthOverrides[key] = Math.max(0, Math.min(100, parseFloat(v) || 0));
+        saveState();
+        renderYearTracker();
+      });
+    });
   }
 
   function renderSparkline() {
@@ -672,7 +746,7 @@ html, body {
   // ============================================================
   // SETTINGS (data export/import/reset only)
   // ============================================================
-  $('settingsBtn').addEventListener('click', () => { $('setModalBg').classList.add('show'); });
+  $('settingsBtn').addEventListener('click', () => { renderBackfillInputs(); $('setModalBg').classList.add('show'); });
   $('setClose').addEventListener('click', () => $('setModalBg').classList.remove('show'));
 
   $('setExport').addEventListener('click', () => {
