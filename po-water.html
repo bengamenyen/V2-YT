@@ -131,48 +131,73 @@ html, body {
   font-size: 18px; color: var(--text-3); font-weight: 500;
 }
 
-/* ----- Habit checklist ----- */
-.habit-list { display: flex; flex-direction: column; }
-.habit-item {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 12px 2px;
+/* ----- Weekly habit grid (habit rows × 7 day columns) ----- */
+.week-grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px; }
+.week-grid {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.4fr) repeat(7, minmax(40px, 1fr));
+  gap: 0 4px;
+  min-width: 560px;
+}
+.week-grid-day-head {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-3); text-align: center; padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
-.habit-item:last-child { border-bottom: none; }
-.habit-name {
-  font-size: 14.5px; font-weight: 600; color: var(--text-1);
-  transition: color 0.15s, opacity 0.15s;
+.week-grid-day-head.today { color: var(--good); }
+.week-grid-name {
+  font-size: 13px; font-weight: 600; color: var(--text-1);
+  padding: 10px 8px 10px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
 }
-.habit-name.done { color: var(--text-3); text-decoration: line-through; opacity: 0.75; }
-.habit-check {
-  width: 26px; height: 26px; flex-shrink: 0;
-  border-radius: 8px; border: 1.5px solid var(--border-strong);
+.week-grid-cell {
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.week-check {
+  width: 22px; height: 22px; flex-shrink: 0;
+  border-radius: 7px; border: 1.5px solid var(--border-strong);
   background: rgba(255,255,255,0.04);
   display: flex; align-items: center; justify-content: center;
   color: #04140d; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, border-color 0.15s;
 }
-.habit-check svg { opacity: 0; transform: scale(0.6); transition: opacity 0.12s, transform 0.12s; }
-.habit-check.checked { background: var(--good); border-color: var(--good); }
-.habit-check.checked svg { opacity: 1; transform: scale(1); }
-
-/* ----- Stepped progress bar (10 segments = 10 habits) ----- */
-.habit-progress-wrap { margin-top: 20px; }
-.habit-progress-track { display: flex; gap: 4px; }
-.habit-progress-seg {
-  flex: 1; height: 30px; border-radius: 6px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
-  color: var(--text-4);
-  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+.week-check svg { width: 11px; height: 11px; opacity: 0; transform: scale(0.6); transition: opacity 0.12s, transform 0.12s; }
+.week-check.checked { background: var(--good); border-color: var(--good); }
+.week-check.checked svg { opacity: 1; transform: scale(1); }
+.week-grid-foot-label {
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--text-3); padding-top: 10px;
 }
-.habit-progress-seg.filled {
-  background: linear-gradient(180deg, var(--good), #34d399);
-  border-color: transparent;
-  color: #04140d;
+.week-grid-foot-val {
+  font-size: 11px; font-weight: 700; font-family: var(--font-mono);
+  color: var(--good); text-align: center; padding-top: 10px;
+}
+
+/* ----- Continuous weekly progress bar ----- */
+.week-progress-wrap { margin-top: 20px; }
+.week-progress-track {
+  position: relative; height: 34px; border-radius: 10px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  overflow: hidden;
+}
+.week-progress-fill {
+  position: absolute; top: 0; bottom: 0; left: 0;
+  background: linear-gradient(90deg, var(--info), var(--good));
+  transition: width 0.4s ease;
+}
+.week-progress-label {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.week-progress-label span {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 800;
+  color: #fff;
+  background: rgba(0,0,0,0.35);
+  padding: 3px 10px; border-radius: 999px;
 }
 
 /* ----- History ----- */
@@ -260,7 +285,10 @@ html, body {
 @media (max-width: 480px) {
   .shell { padding: 16px 12px 60px; }
   .habit-num { font-size: 48px; }
-  .habit-progress-seg { font-size: 8px; }
+  .week-check { width: 20px; height: 20px; }
+  .week-grid-day-head { font-size: 9px; }
+  .week-grid-name { font-size: 12px; }
+  .week-grid-foot-val { font-size: 10px; }
 }
 </style>
 </head>
@@ -286,16 +314,21 @@ html, body {
   <div class="divider"><span>HABITS</span></div>
 
   <div class="card">
-    <div class="habit-label" id="habitLabel">HABITS TRACKED TODAY</div>
+    <div class="habit-label" id="habitLabel">HABITS TRACKED THIS WEEK</div>
     <div class="habit-row-count">
       <span class="habit-num" id="habitNum">0</span>
-      <span class="habit-target" id="habitTarget">/ 10</span>
+      <span class="habit-target" id="habitTarget">/ 70</span>
     </div>
 
-    <div class="habit-list" id="habitList"></div>
+    <div class="week-grid-wrap">
+      <div class="week-grid" id="weekGrid"></div>
+    </div>
 
-    <div class="habit-progress-wrap">
-      <div class="habit-progress-track" id="habitProgressTrack"></div>
+    <div class="week-progress-wrap">
+      <div class="week-progress-track">
+        <div class="week-progress-fill" id="weekProgressFill" style="width:0%"></div>
+        <div class="week-progress-label"><span id="weekProgressPct">0%</span></div>
+      </div>
     </div>
   </div>
 
@@ -378,13 +411,29 @@ html, body {
   function todayKey() { return dateKey(new Date()); }
   function dayLog(key) { return state.logs[key] || {}; }
   function dayCount(key) { return Object.values(dayLog(key)).filter(Boolean).length; }
-  function toggleHabit(id) {
-    const k = todayKey();
-    const log = Object.assign({}, dayLog(k));
-    log[id] = !log[id];
-    if (Object.values(log).some(Boolean)) state.logs[k] = log;
-    else delete state.logs[k];
+  function toggleHabitOnDay(dayKey, habitId) {
+    const log = Object.assign({}, dayLog(dayKey));
+    log[habitId] = !log[habitId];
+    if (Object.values(log).some(Boolean)) state.logs[dayKey] = log;
+    else delete state.logs[dayKey];
     saveState();
+  }
+
+  // Monday-start week containing today.
+  function weekDates() {
+    const now = new Date();
+    const dow = now.getDay(); // 0=Sun..6=Sat
+    const diffToMonday = (dow === 0 ? -6 : 1) - dow;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      dates.push(d);
+    }
+    return dates;
   }
 
   // ============================================================
@@ -398,40 +447,60 @@ html, body {
   }
 
   function renderHabits() {
+    const dates = weekDates();
     const today = todayKey();
-    const log = dayLog(today);
-    const count = dayCount(today);
+    const dow = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+    const weekTarget = HABITS.length * dates.length;
 
-    $('habitNum').textContent = count;
-    $('habitTarget').textContent = '/ ' + HABITS.length;
+    let weekTotal = 0;
+    dates.forEach(d => { weekTotal += dayCount(dateKey(d)); });
+    const weekPct = Math.round((weekTotal / weekTarget) * 100);
 
-    $('habitList').innerHTML = HABITS.map(h => {
-      const checked = !!log[h.id];
-      return '<div class="habit-item">'
-        + '<span class="habit-name' + (checked ? ' done' : '') + '">' + escape(h.name) + '</span>'
-        + '<button class="habit-check' + (checked ? ' checked' : '') + '" data-id="' + h.id + '" type="button" aria-label="Toggle ' + escape(h.name) + '" aria-pressed="' + checked + '">'
-        +   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-        + '</button>'
-        + '</div>';
-    }).join('');
+    $('habitNum').textContent = weekTotal;
+    $('habitTarget').textContent = '/ ' + weekTarget;
 
-    $('habitList').querySelectorAll('.habit-check').forEach(btn => {
+    // Header row: blank corner + 7 day labels.
+    let html = '<div></div>';
+    dates.forEach((d, i) => {
+      const isToday = dateKey(d) === today;
+      html += '<div class="week-grid-day-head' + (isToday ? ' today' : '') + '">' + dow[i] + '</div>';
+    });
+
+    // One row per habit, one checkbox cell per day.
+    HABITS.forEach(h => {
+      html += '<div class="week-grid-name">' + escape(h.name) + '</div>';
+      dates.forEach(d => {
+        const k = dateKey(d);
+        const checked = !!dayLog(k)[h.id];
+        html += '<div class="week-grid-cell">'
+          + '<button class="week-check' + (checked ? ' checked' : '') + '" data-day="' + k + '" data-habit="' + h.id + '" type="button" aria-label="Toggle ' + escape(h.name) + ' for ' + k + '" aria-pressed="' + checked + '">'
+          +   '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          + '</button>'
+          + '</div>';
+      });
+    });
+
+    // Footer row: per-day completion %.
+    html += '<div class="week-grid-foot-label">DAILY</div>';
+    dates.forEach(d => {
+      const pct = Math.round((dayCount(dateKey(d)) / HABITS.length) * 100);
+      html += '<div class="week-grid-foot-val">' + pct + '%</div>';
+    });
+
+    const grid = $('weekGrid');
+    grid.innerHTML = html;
+    grid.querySelectorAll('.week-check').forEach(btn => {
       btn.addEventListener('click', () => {
-        toggleHabit(btn.dataset.id);
+        toggleHabitOnDay(btn.dataset.day, btn.dataset.habit);
         renderHabits();
         renderHistory();
         renderSparkline();
       });
     });
 
-    // Stepped progress bar — one segment per habit, 10% each.
-    const track = $('habitProgressTrack');
-    let segHtml = '';
-    for (let i = 1; i <= HABITS.length; i++) {
-      const filled = i <= count;
-      segHtml += '<div class="habit-progress-seg' + (filled ? ' filled' : '') + '">' + (i * (100 / HABITS.length)) + '%</div>';
-    }
-    track.innerHTML = segHtml;
+    // One continuous bar for the whole week (0-100%, ~1.43% per habit checked).
+    $('weekProgressFill').style.width = weekPct + '%';
+    $('weekProgressPct').textContent = weekPct + '%';
   }
 
   function renderHistory() {
