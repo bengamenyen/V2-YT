@@ -1610,12 +1610,12 @@ img, video, canvas, svg { max-width: 100%; }
       <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Starting weight</label>
       <input type="number" id="exStartWeight" step="0.5" placeholder="20" value="20">
     </div>
-    <div class="po-log-grid" id="exNumFields">
+    <div class="po-log-grid" id="exNumFields" style="grid-template-columns:1fr">
       <div class="po-field">
         <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Reps min</label>
         <input type="number" id="exRepMin" value="6">
       </div>
-      <div class="po-field">
+      <div class="po-field" style="display:none">
         <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Reps max</label>
         <input type="number" id="exRepMax" value="8">
       </div>
