@@ -931,8 +931,8 @@ main {
   </div>
 
   <section id="water" class="water-embed">
-    <div class="section-title">Water Tracker</div>
-    <iframe src="po-water.html" class="water-iframe" loading="lazy" title="Water Tracker"></iframe>
+    <div class="section-title">Habit Tracker</div>
+    <iframe src="po-water.html" class="water-iframe" loading="lazy" title="Habit Tracker"></iframe>
   </section>
 
   <div class="attribution">// editable template · all data stays in your browser</div>
@@ -1459,7 +1459,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'health',
-    syncedKeys: ['stack:items', 'stack:version', 'stack:low', 'po_water_v1'],
+    syncedKeys: ['stack:items', 'stack:version', 'stack:low', 'po_water_v1', 'po_habits_v1'],
     syncedPrefixes: ['stack:taken:'],
     onApplied: function () {
       window.dispatchEvent(new Event('storage'));
