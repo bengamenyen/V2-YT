@@ -200,29 +200,7 @@ html, body {
   padding: 3px 10px; border-radius: 999px;
 }
 
-/* ----- History ----- */
-.hist-row {
-  display: grid; grid-template-columns: 70px 1fr auto; gap: 10px;
-  padding: 10px 0; align-items: center;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-}
-.hist-row:last-child { border-bottom: none; }
-.hist-date { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
-.hist-bar-wrap {
-  height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden;
-}
-.hist-bar-fill {
-  height: 100%; background: linear-gradient(90deg, var(--info), var(--good));
-  border-radius: 4px;
-}
-.hist-bar-fill.miss { background: rgba(255,138,138,0.4); }
-.hist-count {
-  font-family: var(--font-mono); font-size: 12px;
-  color: var(--text-2); font-variant-numeric: tabular-nums;
-}
-
-/* ----- Mini chart for last 14 days ----- */
+/* ----- Mini chart — spans the current calendar month ----- */
 .spark-wrap { padding: 6px 0; }
 .spark-svg { width: 100%; height: 70px; display: block; }
 .spark-bar { fill: var(--good); }
@@ -232,6 +210,76 @@ html, body {
   stroke-width: 1; stroke-dasharray: 3 3;
   vector-effect: non-scaling-stroke;
 }
+
+/* ----- Per-day bars for the whole month, label baked into the fill ----- */
+.month-day-row { margin-bottom: 6px; }
+.month-day-bar-wrap {
+  position: relative; height: 32px; border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.month-day-bar-wrap.today { border-color: var(--good); }
+.month-day-bar-fill {
+  position: absolute; top: 0; bottom: 0; left: 0;
+  background: linear-gradient(90deg, var(--info), var(--good));
+  transition: width 0.3s ease;
+}
+.month-day-bar-label {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; padding: 0 10px;
+}
+.month-day-bar-label span {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  color: #fff;
+  background: rgba(0,0,0,0.35);
+  padding: 3px 9px; border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ----- Habits completed this month ----- */
+.month-habit-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+}
+.month-habit-row:last-child { border-bottom: none; }
+.month-habit-name { color: var(--text-1); font-weight: 600; }
+.month-habit-count {
+  font-family: var(--font-mono); font-size: 12.5px;
+  color: var(--text-2); font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ----- Yearly tracker (12 months + total) ----- */
+.year-row {
+  display: grid; grid-template-columns: 42px 1fr auto; gap: 10px;
+  align-items: center; padding: 7px 0;
+}
+.year-row-label {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  color: var(--text-3); text-transform: uppercase;
+}
+.year-row-label.current { color: var(--good); }
+.year-row-bar-wrap {
+  height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden;
+}
+.year-row-bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--info), var(--good));
+  border-radius: 4px;
+}
+.year-row-pct {
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--text-2); font-variant-numeric: tabular-nums;
+}
+.year-total-row {
+  margin-top: 10px; padding-top: 12px;
+  border-top: 1px solid var(--border-strong);
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.year-total-label { color: var(--good); font-weight: 700; font-size: 13px; }
+.year-total-val { color: var(--good); font-weight: 800; font-size: 20px; font-family: var(--font-mono); }
 
 /* ----- Modal ----- */
 .modal-bg {
@@ -333,11 +381,21 @@ html, body {
   </div>
 
   <div class="card">
-    <div class="habit-label">LAST 14 DAYS</div>
+    <div class="habit-label" id="monthLabel">THIS MONTH</div>
     <div class="spark-wrap">
       <svg class="spark-svg" id="sparkSvg" viewBox="0 0 280 70" preserveAspectRatio="none"></svg>
     </div>
-    <div id="histList" style="margin-top:14px"></div>
+    <div id="monthDaysList" style="margin-top:14px"></div>
+
+    <div class="habit-label" style="margin-top:26px">HABITS THIS MONTH</div>
+    <div id="monthHabitsList"></div>
+
+    <div class="habit-label" style="margin-top:26px" id="yearLabel">TRACKER</div>
+    <div id="yearList"></div>
+    <div class="year-total-row">
+      <span class="year-total-label">Year total</span>
+      <span class="year-total-val" id="yearTotalVal">0%</span>
+    </div>
   </div>
 </div>
 
@@ -493,8 +551,10 @@ html, body {
       btn.addEventListener('click', () => {
         toggleHabitOnDay(btn.dataset.day, btn.dataset.habit);
         renderHabits();
-        renderHistory();
+        renderMonthDays();
         renderSparkline();
+        renderMonthHabits();
+        renderYearTracker();
       });
     });
 
@@ -503,39 +563,89 @@ html, body {
     $('weekProgressPct').textContent = weekPct + '%';
   }
 
-  function renderHistory() {
-    const list = $('histList');
+  function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+
+  function renderMonthDays() {
+    const list = $('monthDaysList');
+    const now = new Date();
+    const y = now.getFullYear(), m = now.getMonth();
+    const total = daysInMonth(y, m);
     const target = HABITS.length;
-    const days = [];
-    for (let i = 6; i >= 1; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
+    const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const today = todayKey();
+
+    let html = '';
+    for (let day = 1; day <= total; day++) {
+      const d = new Date(y, m, day);
       const k = dateKey(d);
-      days.push({ date: d, count: dayCount(k) });
-    }
-    list.innerHTML = days.map(({date, count}) => {
-      const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      const lbl = dows[date.getDay()] + ' ' + (date.getMonth()+1) + '/' + date.getDate();
-      const pct = Math.min(100, (count / target) * 100);
-      const cls = (count >= target) ? '' : 'miss';
-      return '<div class="hist-row">'
-        + '<span class="hist-date">' + lbl + '</span>'
-        + '<div class="hist-bar-wrap"><div class="hist-bar-fill ' + cls + '" style="width:' + pct + '%"></div></div>'
-        + '<span class="hist-count">' + count + '/' + target + '</span>'
+      const count = dayCount(k);
+      const pct = Math.round((count / target) * 100);
+      const lbl = dows[d.getDay()] + ' ' + (m + 1) + '/' + day + ' · ' + pct + '%';
+      const isToday = k === today;
+      html += '<div class="month-day-row">'
+        + '<div class="month-day-bar-wrap' + (isToday ? ' today' : '') + '">'
+        +   '<div class="month-day-bar-fill" style="width:' + Math.min(100, pct) + '%"></div>'
+        +   '<div class="month-day-bar-label"><span>' + lbl + '</span></div>'
+        + '</div>'
         + '</div>';
-    }).join('') || '<div style="text-align:center;font-size:12px;color:var(--text-3);padding:12px 0">No logs yet.</div>';
+    }
+    list.innerHTML = html;
+  }
+
+  function renderMonthHabits() {
+    const now = new Date();
+    const y = now.getFullYear(), m = now.getMonth();
+    const total = daysInMonth(y, m);
+    const list = $('monthHabitsList');
+    list.innerHTML = HABITS.map(h => {
+      let done = 0;
+      for (let day = 1; day <= total; day++) {
+        if (dayLog(dateKey(new Date(y, m, day)))[h.id]) done++;
+      }
+      return '<div class="month-habit-row">'
+        + '<span class="month-habit-name">' + escape(h.name) + '</span>'
+        + '<span class="month-habit-count">' + done + '/' + total + '</span>'
+        + '</div>';
+    }).join('');
+  }
+
+  function renderYearTracker() {
+    const y = new Date().getFullYear();
+    const mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const curMonth = new Date().getMonth();
+    $('yearLabel').textContent = y + ' TRACKER';
+
+    let yearDone = 0, yearTotal = 0;
+    let html = '';
+    for (let mo = 0; mo < 12; mo++) {
+      const days = daysInMonth(y, mo);
+      let done = 0;
+      for (let day = 1; day <= days; day++) {
+        done += dayCount(dateKey(new Date(y, mo, day)));
+      }
+      const total = HABITS.length * days;
+      yearDone += done; yearTotal += total;
+      const pct = Math.round((done / total) * 100);
+      html += '<div class="year-row">'
+        + '<span class="year-row-label' + (mo === curMonth ? ' current' : '') + '">' + mons[mo] + '</span>'
+        + '<div class="year-row-bar-wrap"><div class="year-row-bar-fill" style="width:' + Math.min(100, pct) + '%"></div></div>'
+        + '<span class="year-row-pct">' + pct + '%</span>'
+        + '</div>';
+    }
+    $('yearList').innerHTML = html;
+    $('yearTotalVal').textContent = Math.round((yearDone / yearTotal) * 100) + '%';
   }
 
   function renderSparkline() {
     const svg = $('sparkSvg');
     const W = 280, H = 70, pad = 4;
-    const days = 14;
+    const now = new Date();
+    const y = now.getFullYear(), m = now.getMonth();
+    const days = daysInMonth(y, m);
     const target = HABITS.length;
     const data = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      data.push(dayCount(dateKey(d)));
+    for (let day = 1; day <= days; day++) {
+      data.push(dayCount(dateKey(new Date(y, m, day))));
     }
     const maxVal = Math.max(target, Math.max.apply(null, data)) || 1;
     const colW = (W - pad * 2) / data.length;
@@ -553,7 +663,11 @@ html, body {
     svg.innerHTML = html;
   }
 
-  function renderAll() { renderDayPill(); renderHabits(); renderHistory(); renderSparkline(); }
+  function renderAll() {
+    renderDayPill(); renderHabits();
+    renderMonthDays(); renderSparkline();
+    renderMonthHabits(); renderYearTracker();
+  }
 
   // ============================================================
   // SETTINGS (data export/import/reset only)
