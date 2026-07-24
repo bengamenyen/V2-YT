@@ -68,8 +68,14 @@ body::after {
 }
 
 /* ===== Component 1: page title ===== */
-.dash-title {
+.dash-head-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   margin: 0 0 14px;
+}
+.dash-title {
+  margin: 0;
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.025em;
@@ -80,6 +86,25 @@ body::after {
   color: transparent;
 }
 @media (max-width: 480px) { .dash-title { font-size: 22px; } }
+.dash-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  color: rgba(233,236,245,0.7);
+  transition: background 0.15s ease, color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.dash-back-btn:hover, .dash-back-btn:active {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+.dash-back-btn svg { display: block; }
 
 /* ===== Component 2: Goal Ticker ===== */
 .ticker-row {
@@ -600,7 +625,12 @@ body::after {
 <body>
 <div class="page">
 
-  <h1 class="dash-title">Benji</h1>
+  <div class="dash-head-row">
+    <a href="index.html" class="dash-back-btn" aria-label="Back to dashboard">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </a>
+    <h1 class="dash-title">Benji</h1>
+  </div>
 
   <div class="ticker-row">
     <div class="goal-ticker" id="goalTicker" aria-live="polite" aria-atomic="true">
